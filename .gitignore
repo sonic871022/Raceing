@@ -1,0 +1,36 @@
+# Node.js
+sdk/node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 构建产物
+sdk/dist/
+sdk/build/
+*.tsbuildinfo
+
+# 编辑器 / IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Godot
+client-godot/.godot/
+client-godot/.import/
+client-godot/addons/*/plugin.cfg
+*.translation
+
+# 测试
+coverage/
+.cache/
+
+# 环境
+.env
+.env.local
+*.log
+
+# 备份（不应入库）
+*-backup/
