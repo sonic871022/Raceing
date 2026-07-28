@@ -1,0 +1,10 @@
+{
+  "task_key": "codex/add-explicit-zonoid-showcase-cta",
+  "git_user": "yugao-gaos <yu.gao@gaos.ca>",
+  "session_id": "codex-mcp-46037-96320f58563b4fb310aacb28859ffd0b",
+  "branch": "orch/attempt/codex-add-explicit-zonoid-showcase-cta",
+  "status": "tested",
+  "claimed_at": "2026-07-21T16:02:47.606Z",
+  "lease_until": "2026-07-21T17:02:47.606Z",
+  "completed_at": "2026-07-21T16:03:48.858Z"
+}

@@ -1,0 +1,10 @@
+{
+  "task_key": "codex/publish-20-dedicated-sdk-showcase-recordings",
+  "git_user": "yugao-gaos <yu.gao@gaos.ca>",
+  "session_id": "019f8cdf-d430-7d61-94ff-018c03618ec1",
+  "branch": "orch/attempt/codex-publish-20-dedicated-sdk-showcase-recordings",
+  "status": "tested",
+  "claimed_at": "2026-07-23T14:17:41.855Z",
+  "lease_until": "2026-07-23T15:17:41.855Z",
+  "completed_at": "2026-07-23T14:22:31.081Z"
+}

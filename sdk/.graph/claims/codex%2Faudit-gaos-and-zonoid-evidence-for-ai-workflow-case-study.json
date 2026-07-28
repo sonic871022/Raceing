@@ -1,0 +1,10 @@
+{
+  "task_key": "codex/audit-gaos-and-zonoid-evidence-for-ai-workflow-case-study",
+  "git_user": "yugao-gaos <yu.gao@gaos.ca>",
+  "session_id": "codex-mcp-23577-94ca71ff5c663f6d61e8d5800a1c7bc3",
+  "branch": "orch/attempt/codex-audit-gaos-and-zonoid-evidence-for-ai-workflow-case-study",
+  "status": "tested",
+  "claimed_at": "2026-07-21T16:24:57.252Z",
+  "lease_until": "2026-07-21T17:24:57.252Z",
+  "completed_at": "2026-07-21T16:28:33.846Z"
+}
