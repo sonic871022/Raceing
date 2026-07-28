@@ -1,0 +1,10 @@
+{
+  "task_key": "codex/extract-generic-gate-transitions-into-the-sdk",
+  "git_user": "yugao-gaos <yu.gao@gaos.ca>",
+  "session_id": "codex-mcp-94313-7e6091c10cb088c666d15cedbb6db70a",
+  "branch": "orch/attempt/codex-extract-generic-gate-transitions-into-the-sdk",
+  "status": "tested",
+  "claimed_at": "2026-07-21T14:48:11.753Z",
+  "lease_until": "2026-07-21T15:48:11.753Z",
+  "completed_at": "2026-07-21T14:50:42.777Z"
+}

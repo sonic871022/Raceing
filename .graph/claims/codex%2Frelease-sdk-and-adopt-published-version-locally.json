@@ -1,0 +1,10 @@
+{
+  "task_key": "codex/release-sdk-and-adopt-published-version-locally",
+  "git_user": "yugao-gaos <yu.gao@gaos.ca>",
+  "session_id": "codex-mcp-59623-7eca7601b67ea03f80dd9091a9968000",
+  "branch": "orch/attempt/codex-release-sdk-and-adopt-published-version-locally",
+  "status": "tested",
+  "claimed_at": "2026-07-21T16:34:15.391Z",
+  "lease_until": "2026-07-21T17:34:15.391Z",
+  "completed_at": "2026-07-21T16:46:21.047Z"
+}

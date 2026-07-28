@@ -1,0 +1,10 @@
+{
+  "task_key": "codex/rename-gaos-expansion-to-game-agi-open-sdk",
+  "git_user": "yugao-gaos <yu.gao@gaos.ca>",
+  "session_id": "codex-mcp-69758-d1ed44429fac50d9dcd7f17d031c9511",
+  "branch": "orch/attempt/codex-rename-gaos-expansion-to-game-agi-open-sdk",
+  "status": "tested",
+  "claimed_at": "2026-07-21T16:07:17.119Z",
+  "lease_until": "2026-07-21T17:07:17.119Z",
+  "completed_at": "2026-07-21T16:08:22.006Z"
+}

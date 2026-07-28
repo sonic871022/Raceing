@@ -1,0 +1,10 @@
+{
+  "task_key": "codex/condense-gaos-devpost-narrative",
+  "git_user": "yugao-gaos <yu.gao@gaos.ca>",
+  "session_id": "019f852d-a2ff-72a2-9262-5cd848bfcb24",
+  "branch": "orch/attempt/codex-condense-gaos-devpost-narrative",
+  "status": "tested",
+  "claimed_at": "2026-07-21T18:18:58.813Z",
+  "lease_until": "2026-07-21T19:18:58.813Z",
+  "completed_at": "2026-07-21T18:21:42.948Z"
+}
