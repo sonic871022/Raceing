@@ -17,6 +17,38 @@ game/
 - **client-godot**：负责画面表现，把 reducer 的状态画出来，把玩家操作发回 server。
 - **shared**：跨端类型，保证 reducer / server / client 用的是同一套 GameState / Action 定义。
 
+## 当前状态
+
+- `reducer/`：已补最小可运行原型，可本地推进状态
+- `server/`：已补最小开发服务器，可用 HTTP 调试动作提交
+- `shared/`：已补共用规则文件
+- `client-godot/`：目录已创建，等待正式 Godot 工程
+
 ## 启动开发
 
-待补充。
+1. 构建 SDK：
+   ```powershell
+   cd sdk
+   npm run build
+   ```
+
+2. 跑 reducer 冒烟验证：
+   ```powershell
+   cd ..
+   node game/reducer/smoke-test.mjs
+   ```
+
+3. 启动最小本地服务端：
+   ```powershell
+   node game/server/dev-server.mjs
+   ```
+
+4. 手动调试动作：
+   ```powershell
+   Invoke-RestMethod -Method Get http://127.0.0.1:8787/state
+
+   Invoke-RestMethod -Method Post `
+     -Uri http://127.0.0.1:8787/advance `
+     -ContentType 'application/json' `
+     -Body '{"id":"accelerate"}'
+   ```

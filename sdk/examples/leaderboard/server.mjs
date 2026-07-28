@@ -7,6 +7,10 @@ import { createHash } from 'node:crypto';
 
 const quote = (value) => `'${String(value).replaceAll("'", "''")}'`;
 
+function sqliteCommand() {
+  return process.env.GAOS_SQLITE3 ?? (process.platform === 'win32' ? 'sqlite3.cmd' : 'sqlite3');
+}
+
 export function startLeaderboardServer({
   database,
   objects,
@@ -132,13 +136,16 @@ COMMIT;`);
 
 function sql(database, statement) {
   const postgres = /^postgres(?:ql)?:\/\//.test(database);
+  const command = postgres ? (process.env.GAOS_PSQL ?? 'psql') : sqliteCommand();
   const result = spawnSync(
-    postgres ? (process.env.GAOS_PSQL ?? 'psql') : (process.env.GAOS_SQLITE3 ?? 'sqlite3'),
+    command,
     postgres ? [database, '-v', 'ON_ERROR_STOP=1', '-At'] : [database], {
     input: statement,
     encoding: 'utf8',
+    shell: process.platform === 'win32' && !postgres,
   });
-  if (result.status !== 0) throw new Error(result.stderr.trim() || 'sqlite failed');
+  const stderr = typeof result.stderr === 'string' ? result.stderr.trim() : '';
+  if (result.status !== 0) throw new Error(stderr || 'sqlite failed');
   return result.stdout;
 }
 function sqlJson(database, statement) {
@@ -152,11 +159,13 @@ function sqlJson(database, statement) {
     const output = sql(database, `SELECT COALESCE(json_agg(row_to_json(q)),'[]'::json) FROM (${query}) q;`);
     return JSON.parse(output.trim() || '[]');
   }
-  const result = spawnSync(process.env.GAOS_SQLITE3 ?? 'sqlite3', ['-json', database], {
+  const result = spawnSync(sqliteCommand(), ['-json', database], {
     input: statement,
     encoding: 'utf8',
+    shell: process.platform === 'win32',
   });
-  if (result.status !== 0) throw new Error(result.stderr.trim() || 'sqlite failed');
+  const stderr = typeof result.stderr === 'string' ? result.stderr.trim() : '';
+  if (result.status !== 0) throw new Error(stderr || 'sqlite failed');
   return result.stdout.trim() ? JSON.parse(result.stdout) : [];
 }
 function rowToEntry(database, row) {

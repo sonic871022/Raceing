@@ -46,7 +46,36 @@ git subtree pull --prefix=sdk GAOS-Official main --squash -m "Merge GAOS SDK upd
    npm test
    ```
 
-3. （待补充）启动游戏服务端 + Godot 客户端
+3. 构建 SDK：
+   ```powershell
+   cd sdk
+   npm run build
+   ```
+
+4. 跑 Racing reducer 冒烟脚本：
+   ```powershell
+   cd ..
+   node game/reducer/smoke-test.mjs
+   ```
+
+5. 启动最小本地服务端：
+   ```powershell
+   node game/server/dev-server.mjs
+   ```
+
+6. 手动验证服务端：
+   ```powershell
+   Invoke-RestMethod -Method Get http://127.0.0.1:8787/state
+
+   Invoke-RestMethod -Method Post `
+     -Uri http://127.0.0.1:8787/advance `
+     -ContentType 'application/json' `
+     -Body '{"id":"accelerate"}'
+   ```
+
+7. Godot 客户端
+
+   `game/client-godot/` 目录已创建，但正式工程仍待补充。当前建议先用 HTTP 调试方式把 reducer / server 跑通，再接 Godot 4.7 客户端。
 
 ## 关联项目
 

@@ -37,8 +37,9 @@
 ## 开发状态
 
 - [x] SDK 部署
-- [ ] Reducer 设计
+- [x] Reducer 最小原型
+- [x] 最小 Node.js 服务端
+- [ ] Reducer 正式版（TypeScript + tests）
 - [ ] 赛道数据结构
 - [ ] 单元测试
-- [ ] Node.js 服务端
 - [ ] Godot 客户端
