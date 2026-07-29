@@ -1,4 +1,4 @@
-import { advanceTick } from '../../sdk/dist/engine/contracts.js';
+import { advanceTick } from '@yugao-gaos/turn-based-grid-sdk/engine';
 import { racingReducer } from './reducer.mjs';
 
 let state = racingReducer.init(undefined, 7);
