@@ -16,6 +16,7 @@ sdk/build/
 *.swp
 .DS_Store
 Thumbs.db
+Raceing.code-workspace
 
 # Godot
 client-godot/.godot/
