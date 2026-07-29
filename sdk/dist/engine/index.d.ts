@@ -1,0 +1,60 @@
+export { rectFootprint, resolveKeyedMoves, resolveMoves, type Cell, type KeyedMover, type KeyedMoveOptions, type MoveResolution, type Mover, } from './movement.js';
+export { runSettlementCascade, SettlementLimitError, type SettlementContext, type SettlementJob, type SettlementOptions, type SettlementPolicy, type SettlementResolver, type SettlementResult, type SettlementTraceEntry, } from './settlement.js';
+export { resolveChainReaction, type ChainReactionContext, type ChainReactionOptions, type ChainReactionResult, } from './chain-reaction.js';
+export { advancePathProjectiles, resolveFlightPasses, type FlightPassOptions, type FlightPassResult, type PathProjectileOptions, type ProjectileAction, } from './projectiles.js';
+export { commitPushChain, planPushChain, type PushChainCommitter, type PushChainOptions, type PushChainStep, type PushDestination, } from './push-chain.js';
+export { resolveArrival, type ArrivalRule, } from './arrival.js';
+export { resolveGateTransition, type GateMode, type GateState, type GateTransition, type GateTransitionInput, type GateTransitionResult, } from './gates.js';
+export { resolveLatchedTriggers, type LatchedTrigger, type LatchedTriggerOptions, } from './triggers.js';
+export { traverseGridRay, type GridRayDirective, type GridRayResult, } from './rays.js';
+export { evaluateBehaviorTree, type BehaviorTreeAdapter, type BehaviorTreeNodeView, } from './behavior-tree.js';
+export { arbitrateResourceClaims, type ResourceArbitration, type ResourceClaim, } from './resource-claims.js';
+export { buildLinkedComponentSources, proposeDirectedTransport, resolveInterlock, resolveTransportRun, type ComponentLink, type DirectedTransportOccupant, type DirectedTransportOptions, type InterlockOptions, type InterlockResult, type LinkedComponentOptions, type TransportRunOptions, type TransportRunResult, } from './transport.js';
+export { fnv1a, mulberry32, roll, seededPermutation, } from './random.js';
+export { DMATH_ALGORITHM, DMATH_CONSTANTS, STATE_MATH, createDmath, type Dmath, type DmathBackend, } from './dmath.js';
+export { COMMITMENT_MAX_ID, COMMITMENT_MAX_PAYLOAD_BYTES, COMMITMENT_SCHEME, assertCommitmentEnvelope, bytesToHex, canonicalCommitPayloadV1, commitmentPreimageV1, createCommitmentHash, sha256, verifyCommitmentReveal, type CommitmentBinding, type CommitmentEnvelope, type CommitmentVerification, type CommitmentVerificationCode, type RevealEnvelope, } from './commitment.js';
+export { SUBMISSION_SIGNATURE_ALGORITHM, SUBMISSION_SIGNATURE_SCHEME, canonicalSubmissionCommandV1, exportSubmissionPublicKey, generateSubmissionKeyPair, periodicSignaturePreimageV1, signEd25519Base64, signPeriodicChainHeadV1, signSubmissionV1, signatureBytesFromBase64, signatureBytesToBase64, submissionChainHashV1, submissionGenesisHashV1, submissionPreimageV1, submissionRosterHashV1, verifyEd25519, verifyEd25519Base64, type PeriodicSigningEnvelope, type SubmissionSeatKey, type SubmissionSignaturePolicy, type SubmissionSigningEnvelope, type SubmissionSigningTier, } from './submission-signatures.js';
+export { assertGameDescriptor, actionEfficiency, assertFormalMetricPreconditions, assertTransformDescriptor, headToHeadPayoffMatrix, policyEntropy, sampleActionDistribution, updateEloRatings, validateActionDistribution, validateChanceOutcomes, winRate, type ActionEfficiency, type ChanceOutcome, type FormalMetric, type GameDescriptor, type GameHistory, type GameObserver, type GameTransform, type HeadToHeadPayoffMatrix, type HeadToHeadResult, type Policy, type PolicyChoice, type Rating, type RatingMatch, type TransformDescriptor, type WinRateEstimate, } from './research.js';
+export { changeResource, commitResourceTransaction, defineResources, initializeResourceBalances, planResourceTransaction, resourceAtLeast, type ResourceBalances, type ResourceChange, type ResourceDefinition, type ResourceDefinitions, type ResourceDeltaEffect, type ResourceMinimumRequirement, type ResourceTransaction, type ResourceTransactionFailure, type ResourceTransactionPlan, } from './resources.js';
+export { aiActionLimitExceeded, budgetFailure, scoreStars, suggestStarThresholds, type AIActionLimitUsage, type BudgetFailure, type BudgetUsage, type StarThresholds, } from './scoring.js';
+export { type ActionDefinition, type ActionReducer, type GridTargetingView, type GridViewNamespace, type Outcome, type Participation, type ReplayMetrics, type SessionView, type SubmittedAction, type TargetChoiceView, advanceTick, replayMetricsFor, type Reducer, type TickReducer, type TickView, type ZoneEntryView, type ZoneViewNamespace, type ZoneViews, 
+/** @deprecated Use `ActionDefinition`. */
+type GridActionDefinition, 
+/** @deprecated Use `SubmittedAction`. */
+type GridSubmittedAction, } from './contracts.js';
+export { createTickRate, elapsedMillisecondsAtTick, tickAtElapsedMilliseconds, type TickRate, } from './ticks.js';
+export { enumerateActions, solveLevel, type SolveResult, type SolverOptions, 
+/** @deprecated Use `enumerateActions`. */
+enumerateGridActions, 
+/** @deprecated Use `solveLevel`. */
+solveGridLevel, 
+/** @deprecated Use `SolveResult`. */
+type GridSolveResult, 
+/** @deprecated Use `SolverOptions`. */
+type GridSolverOptions, } from './solver.js';
+export { recheckTranscript, recheckGridTranscript, runLevelSeed, type RecheckResult, type RecheckOptions, type TranscriptAction, type TranscriptHeader, type TranscriptVisibility, 
+/** @deprecated Use `RecheckResult`. */
+type GridRecheckResult, 
+/** @deprecated Use `TranscriptAction`. */
+type GridTranscriptAction, 
+/** @deprecated Use `TranscriptHeader`. */
+type GridTranscriptHeader, } from './replay.js';
+export { GAOS_REPLAY_DERIVED_SEEDS, GAOS_REPLAY_EXTENSION, GAOS_REPLAY_FORMAT_ID, GAOS_REPLAY_LEGACY_FORMAT_VERSION, GAOS_REPLAY_SIGNED_FORMAT_VERSION, GAOS_REPLAY_UNSIGNED_FORMAT_VERSION, GAOS_REPLAY_FORMAT_VERSION, GAOS_REPLAY_MANIFEST_FORMAT, GAOS_REPLAY_MIME, GAOS_TIMEOUT_POLICY_REF, ReplayFormatError, createReplayArtifact, parseReplayJsonl, recheckReplayArtifact, recheckReplaySignatures, serializeReplayJsonl, transcriptToReplayArtifact, validateReplayArtifact, type CreateReplayArtifactInput, type ReplayAction, type ReplayActionInput, type ReplayArtifact, type ReplayArtifactRecheckOptions, type ReplayArtifactRecheckResult, type ReplaySignatureCheck, type ReplaySignatureState, type ReplaySeatSignatureCheck, type ReplaySemanticAdapter, type ReplaySemanticCheck, type ReplaySemanticState, type ReplaySubmissionContext, type ReplayTickTimeoutPolicy, type ReplayTimeoutContext, type ReplayVerificationVerdict, type ReplayCheckpoint, type ReplayCommitMismatchAudit, type ReplayTimeout, type ReplayExtension, type ReplayFormatVersion, type ReplayGameRef, type ReplayHeader, type ReplayLevelInput, type ReplayLevelRecheck, type ReplayLevelRecord, type ReplayLevelResult, type ReplayReducerContext, type ReplayReducerResolver, type ReplayRecord, type ReplayResolution, type ReplayResolutionInput, type ReplaySeedPolicy, type ReplaySeatIntegrityReservation, type ReplaySeatSignatureReservation, type ReplayTotals, type TranscriptReplayOptions, } from './replay-format.js';
+export { locationKey, type LocationCoord, type LocationRef, } from './locations.js';
+export { createGraphLayout, createHexAxialLayout, createSquareLayout, fieldCells, lineOfSight, nearestReachablePath, shortestPath, type BoardLayout, type FieldOptions, type GraphLayoutOptions, type HexAxialLayoutOptions, type NearestReachablePathOptions, type ShortestPathOptions, type SquareLayoutOptions, } from './layouts.js';
+export { findPatterns, type PatternMatch, type PatternSpec, type TokenRef, } from './patterns.js';
+export { InformationLeakError, assertNoInformationLeak, createInformationRevelation, deriveSeatView, outcomeForTeams, revelationsForSeat, teamForSeat, teamVisibility, visibilityAllows, type BoardEntityView, type BoardObservation, type BoardVisibilityPolicy, type InformationLeakCheckOptions, type InformationPartitionPolicies, type InformationRevelation, type SpectatorVisibilityPolicy, type TeamDefinition, type TeamRanking, type Visibility, type ZoneVisibilityPolicy, } from './information.js';
+export { canonicalizeLockstepInputs, resimulate, stateDigest, type LockstepInput, type ResimulationOptions, type StateDigestOptions, } from './lockstep.js';
+export { bag, commitZoneTransfer, createZone, dealBatches, dealRoundRobin, deck, defineZones, discard, drawFromZone, hand, planZoneTransfer, queue, shuffleZone, slotRow, type DealResult, type DealSpec, type DrawResult, type ZoneAccess, type ZoneArrival, type ZoneCollection, type ZoneCommitOptions, type ZoneCommitResult, type ZoneConfig, type ZoneInsert, type ZoneOrder, type ZoneState, type ZoneTransferFailure, type ZoneTransferFailureCode, type ZoneTransferPlan, type ZoneTransferSpec, } from './zones.js';
+export { KeywordRegistry, resolveKeywordLayerDetails, resolveKeywordLayers, type ActiveKeyword, type KeywordDefinition, type KeywordKind, type ResolvedKeyword, } from './keywords.js';
+export { openResponseWindow, passResponsePriority, responsePrioritySeat, responseWindowParticipation, submitResponse, timeoutResponsePriority, unwindResponseWindow, type ResponsePass, type ResponsePassReason, type ResponseStackEntry, type ResponseWindow, } from './response-windows.js';
+export { enumerateTargetChoices, type TargetChoiceEnumeration, type TargetEnumerationOptions, type TargetSpec, } from './targeting.js';
+export { advanceDurations, spendStatusCounters, type Duration, type DurationAdvanceResult, type DurationBoundary, type TimedStatus, } from './durations.js';
+export { activePhase, advancePhase, createPhaseState, type PhaseAdvanceResult, type PhaseBoundaryEvent, type PhaseDefinition, type PhaseState, } from './phases.js';
+export { validateDeck, type DeckConstraint, type DeckEntry, type DeckValidationResult, type DeckViolation, type DeckViolationCode, } from './deck-validation.js';
+export { commitPortalTransits, planPortalTransits, type CommittedPortalTransit, type PortalAdaptation, type PortalBoardAdaptation, type PortalCommitResult, type PortalCommitter, type PortalEdge, type PortalEntrant, type PortalInsertPolicy, type PortalPlanningOptions, type PortalPolicy, type PortalRejectedEntrant, type PortalTransit, type PortalTransitFailure, type PortalTransitFailureCode, type PortalTransitPlan, type PortalZoneAdaptation, } from './portals.js';
+export { CARDINAL_STEPS, CARDINAL_VECTORS, bresenhamLine, coneFieldCells, lineOfSightClear, manhattanDistance, nearestReachableCellPath, shortestGridPath, type CardinalDirection, type ConeFieldOptions, type NearestReachableCellOptions, type ReachableCellPath, type ShortestGridPathOptions, } from './geometry.js';
+export { AGENT_TRANSCRIPT_VERSION, AgentEnvironment, AgentEnvironmentError, type AgentEnvironmentErrorCode, type AgentEnvironmentOptions, type AgentMetrics, type AgentResetOptions, type AgentTerminationReason, type AgentTranscript, type AgentTranscriptAction, type AgentStep, type AgentStepInfo, } from './agent-environment.js';
+export { evaluateAgentEpisodes, runAgentEpisode, type AgentBatchCase, type AgentBatchEpisode, type AgentBatchResult, type AgentEpisodeResult, type AgentPolicy, } from './agent-evaluation.js';
+export { AGENT_TOOL_DEFINITIONS, createAgentToolAdapter, type AgentToolAdapter, type AgentToolDefinition, type AgentToolName, } from './agent-tools.js';
+export { MULTI_AGENT_TRANSCRIPT_VERSION, MultiAgentEnvironment, MultiAgentEnvironmentError, runMultiAgentEpisode, type MultiAgentEnvironmentErrorCode, type MultiAgentEnvironmentOptions, type MultiAgentEpisodeResult, type MultiAgentPolicy, type MultiAgentSeatStep, type MultiAgentStep, type MultiAgentTranscript, type MultiAgentTranscriptTick, } from './multi-agent-environment.js';

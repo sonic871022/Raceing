@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { advanceTick } from '../../sdk/dist/engine/contracts.js';
+import { advanceTick } from '@yugao-gaos/turn-based-grid-sdk/engine';
 import { racingReducer } from '../reducer/reducer.mjs';
 
 const port = Number.parseInt(process.env.PORT ?? '8787', 10);

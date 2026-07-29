@@ -1,0 +1,14 @@
+{
+  "name": "racing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Racing - 竞速骰子桌游，基于 GAOS Turn-Based Grid SDK",
+  "type": "module",
+  "scripts": {
+    "smoke": "node game/reducer/smoke-test.mjs",
+    "server": "node game/server/dev-server.mjs"
+  },
+  "dependencies": {
+    "@yugao-gaos/turn-based-grid-sdk": "github:yugao-gaos/GAOS-TurnBasedGrid-SDK#main"
+  }
+}

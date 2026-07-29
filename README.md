@@ -6,64 +6,50 @@
 
 ```
 Raceing/
-├── sdk/                # GAOS Turn-Based Grid SDK（subtree 方式管理，可从官方同步）
 ├── game/               # 赛车游戏自己的代码
-│   ├── reducer/        # 游戏规则（TypeScript，与 SDK 接口对接）
+│   ├── reducer/        # 游戏规则（与 SDK 接口对接）
 │   ├── server/         # Node.js 服务端（WebSocket/HTTP）
-│   └── client-godot/   # Godot 4.7 客户端（渲染、动画、UI）
-├── tools/              # 工具脚本
-│   └── sync-sdk.ps1    # 一键从 GAOS 官方拉取最新更新
+│   ├── client-godot/   # Godot 4.7 客户端（渲染、动画、UI）
+│   └── shared/         # 共享的赛车规则逻辑
 ├── docs/               # 游戏设计文档
+├── package.json        # 项目依赖（SDK 通过 npm 包安装）
 └── README.md
 ```
 
-## 同步 GAOS 官方 SDK
-
-需要更新 SDK 到最新版本时，运行：
+## 安装
 
 ```powershell
-pwsh tools/sync-sdk.ps1
+npm install
 ```
 
-或手动执行：
+SDK 通过 npm 包方式安装（`@yugao-gaos/turn-based-grid-sdk`），无需手动管理 subtree。
+
+## 更新 SDK
+
+当 GAOS 官方发布新版本时，更新 `package.json` 中的版本号：
 
 ```powershell
-git fetch GAOS-Official main
-git subtree pull --prefix=sdk GAOS-Official main --squash -m "Merge GAOS SDK updates"
+npm install @yugao-gaos/turn-based-grid-sdk@latest
 ```
 
 ## 快速开始
 
 1. 安装依赖：
    ```powershell
-   cd sdk
    npm install
    ```
 
-2. 跑 SDK 自带测试（验证环境）：
+2. 跑 Racing reducer 冒烟脚本：
    ```powershell
-   cd sdk
-   npm test
+   npm run smoke
    ```
 
-3. 构建 SDK：
+3. 启动最小本地服务端：
    ```powershell
-   cd sdk
-   npm run build
+   npm run server
    ```
 
-4. 跑 Racing reducer 冒烟脚本：
-   ```powershell
-   cd ..
-   node game/reducer/smoke-test.mjs
-   ```
-
-5. 启动最小本地服务端：
-   ```powershell
-   node game/server/dev-server.mjs
-   ```
-
-6. 手动验证服务端：
+4. 手动验证服务端：
    ```powershell
    Invoke-RestMethod -Method Get http://127.0.0.1:8787/state
 
@@ -73,7 +59,7 @@ git subtree pull --prefix=sdk GAOS-Official main --squash -m "Merge GAOS SDK upd
      -Body '{"id":"accelerate"}'
    ```
 
-7. Godot 客户端
+5. Godot 客户端
 
    `game/client-godot/` 目录已创建，但正式工程仍待补充。当前建议先用 HTTP 调试方式把 reducer / server 跑通，再接 Godot 4.7 客户端。
 
