@@ -66,12 +66,6 @@ function moveCells(state, from, distance) {
     pos = (pos + 1) % trackLength;
     steps += 1;
 
-    // 主赛道行驶时跳过 P 房格，P 房只能通过显式“进入 P 房”到达
-    if (pos === PIT_P_TRACK_CELL && from !== PIT_P_TRACK_CELL) {
-      pos = (pos + 1) % trackLength;
-      steps += 1;
-    }
-
     const limit = state.level.speedLimits.find((l) => l.at === pos);
     if (limit) {
       const cornerIdx = cornerIndexForLimit(state.level, limit.at);
@@ -99,7 +93,7 @@ function moveCells(state, from, distance) {
 }
 
 function resolvePitMovement(state, isEntering = false) {
-  // 进入 P 房：驶过入口直达 P 房通道的 P 格，补油完成，下回合可正常掷骰子出发
+  // 进入 P 房：驶过入口直达 P 房通道的 P 格，补油完成，清零骰子和车速，本回合结束
   if (isEntering) {
     return {
       ...state,
@@ -108,10 +102,11 @@ function resolvePitMovement(state, isEntering = false) {
       position: PIT_P_TRACK_CELL,
       fuel: state.level.maxFuel,
       pendingRoll: 0,
-      roll: state.pendingRoll,
+      roll: 0,
+      speed: 0,
       turn: state.turn + 1,
       lastAction: 'enter-pit',
-      message: 'P房补油完成，下回合从P房正常出发',
+      message: 'P房补油完成，本回合结束，下回合从P房正常出发',
       perfectBrake: null,
     };
   }
@@ -124,27 +119,29 @@ function resolvePitMovement(state, isEntering = false) {
     position: PIT_P_TRACK_CELL,
     fuel: state.level.maxFuel,
     pendingRoll: 0,
-    roll: state.pendingRoll,
+    roll: 0,
+    speed: 0,
     turn: state.turn + 1,
     lastAction: 'end-turn',
-    message: 'P房补油完成，下回合从P房正常出发',
+    message: 'P房补油完成，本回合结束，下回合从P房正常出发',
     perfectBrake: null,
   };
 }
 
 function resolvePitExitMovement(state, pendingRoll) {
-  const distance = state.speed + pendingRoll;
-
-  if (distance <= 0) {
+  // P 房内必须掷骰子才能移动；未掷骰子时点击回合结束，原地不动
+  if (pendingRoll === 0) {
     return {
       ...state,
       pendingRoll: 0,
-      roll: pendingRoll,
+      roll: 0,
       turn: state.turn + 1,
       lastAction: 'end-turn',
-      message: '原地等待',
+      message: '请先掷骰子再出发',
     };
   }
+
+  const distance = state.speed + pendingRoll;
 
   // 从 P 格出发：P -> 出口（1 格），出口 -> 2 号格子（1 格），剩余在主赛道
   if (state.pitPosition === 1) {
@@ -221,8 +218,25 @@ function nextActionList(state) {
     return actions;
   }
 
-  // 在 P 房格或出口时，可以掷骰子、调整速度、结束回合
-  if (state.inPit && (state.pitPosition === 1 || state.pitPosition === 2)) {
+  // 在 P 房格停留时：刚进入 P 房的本回合只能结束回合；下回合恢复正常操作
+  if (state.inPit && state.pitPosition === 1) {
+    if (state.lastAction === 'enter-pit') {
+      // 本回合刚进入 P 房，只能结束回合（预留未来技能卡扩展）
+      actions.push({ id: 'end-turn', params: 'none', text: '回合结束' });
+      return actions;
+    }
+    // 下回合：正常操作，从 P 格出发
+    if (state.pendingRoll === 0) {
+      actions.push({ id: 'roll-dice', params: 'none', text: '掷骰子' });
+    }
+    actions.push({ id: 'accelerate', params: 'none', text: '加速（油耗 1，速度+1）' });
+    actions.push({ id: 'brake', params: 'none', text: '刹车（速度-1）' });
+    actions.push({ id: 'end-turn', params: 'none', text: '回合结束' });
+    return actions;
+  }
+
+  // 在出口时，可以掷骰子、调整速度、结束回合
+  if (state.inPit && state.pitPosition === 2) {
     if (state.pendingRoll === 0) {
       actions.push({ id: 'roll-dice', params: 'none', text: '掷骰子' });
     }
@@ -309,6 +323,22 @@ export function applyAction(state, action = { id: 'end-turn' }) {
 
   const actionId = action?.id ?? 'end-turn';
 
+  // P 房格本回合（刚进入 P 房）：只能结束回合，不能移动/加速/掷骰
+  if (state.inPit && state.pitPosition === 1 && state.lastAction === 'enter-pit') {
+    if (actionId === 'end-turn') {
+      return {
+        ...state,
+        pendingRoll: 0,
+        roll: 0,
+        speed: 0,
+        turn: state.turn + 1,
+        lastAction: 'end-turn-pit',
+        message: 'P房休整完毕，下回合从P房正常出发',
+      };
+    }
+    return state;
+  }
+
   if (state.stunTurns > 0) {
     return {
       ...state,
@@ -368,8 +398,15 @@ export function applyAction(state, action = { id: 'end-turn' }) {
   if (state.inPit && state.pitPosition === 0) {
     // 在 P 房通道入口，结束回合后驶入 P 房格
     nextState = resolvePitMovement(state);
-  } else if (state.inPit && (state.pitPosition === 1 || state.pitPosition === 2)) {
-    // 在 P 房格或出口，点击结束回合驶出 P 房
+  } else if (state.inPit && state.pitPosition === 1) {
+    // 下回合从 P 格出发，正常移动
+    if (actionId === 'end-turn') {
+      nextState = resolvePitExitMovement(state, state.pendingRoll);
+    } else {
+      return state;
+    }
+  } else if (state.inPit && state.pitPosition === 2) {
+    // 在出口，点击结束回合驶出 P 房
     if (actionId === 'end-turn') {
       nextState = resolvePitExitMovement(state, state.pendingRoll);
     } else {
