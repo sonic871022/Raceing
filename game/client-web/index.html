@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Racing - 加油！</title>
+  <style>
+    :root {
+      --bg: #111827;
+      --panel: #1f2937;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --danger: #ef4444;
+      --corner: #f59e0b;
+      --pit: #10b981;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    h1 {
+      margin: 0 0 16px;
+      font-size: 1.5rem;
+    }
+    .panels {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .panel {
+      background: var(--panel);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #374151;
+    }
+    .stat:last-child {
+      border-bottom: none;
+    }
+    .stat span:last-child {
+      font-weight: 600;
+    }
+    .message {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: #111827;
+      border-radius: 6px;
+      min-height: 1.5em;
+    }
+    .track {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      max-width: 640px;
+      margin-top: 8px;
+    }
+    .cell {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      background: #374151;
+      position: relative;
+      font-size: 0.85rem;
+    }
+    .cell.corner {
+      background: var(--corner);
+      color: #111827;
+    }
+    .cell.pit {
+      background: var(--pit);
+      color: #111827;
+    }
+    .cell.limit {
+      background: var(--danger);
+      color: #fff;
+      font-size: 1rem;
+    }
+    .cell .car {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+    .cell .index {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 0.65rem;
+      font-weight: 400;
+      opacity: 0.7;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 1rem;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+    }
+    button:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .reset {
+      background: var(--danger);
+    }
+    .reset:hover:not(:disabled) {
+      background: #dc2626;
+    }
+    .status-won { color: #34d399; }
+    .status-failed { color: var(--danger); }
+    .status-playing { color: #60a5fa; }
+  </style>
+</head>
+<body>
+  <h1>Racing - 加油！</h1>
+
+  <div class="panels">
+    <div class="panel">
+      <h2>比赛状态</h2>
+      <div class="stat"><span>状态</span><span id="status">loading</span></div>
+      <div class="stat"><span>圈数</span><span id="lap">-</span></div>
+      <div class="stat"><span>位置</span><span id="position">-</span></div>
+      <div class="stat"><span>车速</span><span id="speed">-</span></div>
+      <div class="stat"><span>油量</span><span id="fuel">-</span></div>
+      <div class="stat"><span>本回合骰子</span><span id="roll">-</span></div>
+      <div class="stat"><span>完美刹车</span><span id="perfect-brake">-</span></div>
+      <div class="stat"><span>休整回合</span><span id="stun-turns">-</span></div>
+      <div class="stat"><span>回合</span><span id="turn">-</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>赛道</h2>
+      <div id="track" class="track">加载中…</div>
+    </div>
+
+    <div class="panel">
+      <h2>操作</h2>
+      <div id="actions" class="actions">
+        <button disabled>加载中…</button>
+      </div>
+      <div id="message" class="message">-</div>
+    </div>
+  </div>
+
+  <button id="reset" class="reset">重置对局</button>
+
+  <script src="app.js"></script>
+</body>
+</html>

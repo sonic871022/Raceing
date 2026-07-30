@@ -12,7 +12,7 @@ export const racingReducer = {
   advance(state, inputs) {
     const [action] = Array.isArray(inputs) && inputs.length > 0
       ? inputs
-      : [{ id: 'cruise' }];
+      : [{ id: 'end-turn' }];
     return applyAction(state, action);
   },
 };

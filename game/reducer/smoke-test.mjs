@@ -4,11 +4,11 @@ import { racingReducer } from './reducer.mjs';
 let state = racingReducer.init(undefined, 7);
 
 const script = [
+  { id: 'roll-dice' },
   { id: 'accelerate' },
-  { id: 'cruise' },
+  { id: 'end-turn' },
   { id: 'brake' },
-  { id: 'pit-stop' },
-  { id: 'accelerate' },
+  { id: 'end-turn' },
 ];
 
 for (const action of script) {
