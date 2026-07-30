@@ -72,6 +72,46 @@
       max-width: 640px;
       margin-top: 8px;
     }
+    .pit-lane {
+      display: flex;
+      gap: 6px;
+      max-width: 640px;
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #1f2937;
+      border-radius: 8px;
+      align-items: center;
+    }
+    .pit-lane-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-right: 6px;
+    }
+    .pit-cell {
+      flex: 1;
+      max-width: 72px;
+      aspect-ratio: 1;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      background: #374151;
+      position: relative;
+      font-size: 0.85rem;
+    }
+    .pit-cell.pit {
+      background: #8b5cf6;
+      color: #fff;
+    }
+    .pit-cell.pit-track {
+      background: var(--pit);
+      color: #111827;
+    }
+    .pit-cell .car {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
     .cell {
       width: 100%;
       aspect-ratio: 1;
@@ -160,6 +200,7 @@
 
     <div class="panel">
       <h2>赛道</h2>
+      <div id="pit-lane" class="pit-lane"></div>
       <div id="track" class="track">加载中…</div>
     </div>
 

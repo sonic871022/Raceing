@@ -8,6 +8,7 @@ const els = {
   perfectBrake: document.getElementById('perfect-brake'),
   stunTurns: document.getElementById('stun-turns'),
   turn: document.getElementById('turn'),
+  pitLane: document.getElementById('pit-lane'),
   track: document.getElementById('track'),
   actions: document.getElementById('actions'),
   message: document.getElementById('message'),
@@ -37,9 +38,43 @@ async function resetGame() {
 }
 
 function renderTrack(state, view) {
-  const { trackLength, corners, speedLimits } = view.race;
+  const { trackLength, corners, speedLimits, pitTrackCells, pitLane, inPit, pitPosition } = view.race;
   const position = state.position;
   const limitMap = new Map((speedLimits || []).map((l) => [l.at, l.limit]));
+  const pitSet = new Set(pitTrackCells || []);
+
+  // P房通道：0 - 入口 - P房 - 出口 - 2
+  els.pitLane.innerHTML = '';
+  const label = document.createElement('span');
+  label.className = 'pit-lane-label';
+  label.textContent = 'P房';
+  els.pitLane.appendChild(label);
+
+  const pitLaneCells = [
+    { key: 'entrance', text: '入', type: 'channel' },
+    { key: 'pit', text: 'P', type: 'pit' },
+    { key: 'exit', text: '出', type: 'channel' },
+  ];
+
+  pitLaneCells.forEach((p, idx) => {
+    const cell = document.createElement('div');
+    cell.className = `pit-cell ${p.type}`;
+    cell.textContent = p.text;
+
+    const carAt = inPit && (
+      (p.key === 'entrance' && pitPosition === 0) ||
+      (p.key === 'pit' && pitPosition === 1) ||
+      (p.key === 'exit' && pitPosition === 2)
+    );
+    if (carAt) {
+      const car = document.createElement('span');
+      car.className = 'car';
+      car.textContent = '🏎️';
+      cell.appendChild(car);
+    }
+
+    els.pitLane.appendChild(cell);
+  });
 
   els.track.innerHTML = '';
   for (let i = 0; i < trackLength; i += 1) {
@@ -47,13 +82,14 @@ function renderTrack(state, view) {
     cell.className = 'cell';
     if (corners.includes(i)) cell.classList.add('corner');
     if (limitMap.has(i)) cell.classList.add('limit');
+    if (pitSet.has(i)) cell.classList.add('pit');
 
     const index = document.createElement('span');
     index.className = 'index';
     index.textContent = i;
     cell.appendChild(index);
 
-    if (i === position) {
+    if (!inPit && i === position) {
       const car = document.createElement('span');
       car.className = 'car';
       car.textContent = '🏎️';
