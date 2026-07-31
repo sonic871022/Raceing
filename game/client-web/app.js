@@ -38,76 +38,69 @@ async function resetGame() {
 }
 
 function renderTrack(state, view) {
-  const { trackLength, corners, speedLimits, pitTrackCells, pitLane, inPit, pitPosition } = view.race;
+  const { trackNodes, pitNodes, corners, speedLimits, isOnPit } = view.race;
   const position = state.position;
   const limitMap = new Map((speedLimits || []).map((l) => [l.at, l.limit]));
-  const pitSet = new Set(pitTrackCells || []);
+  const cornerSet = new Set(corners || []);
+  const pitEntrySet = new Set(['0', '2']); // P 房入口/出口连接格
 
-  // P房通道：0 - 入口 - P房 - 出口 - 2
+  // P 房通道
   els.pitLane.innerHTML = '';
   const label = document.createElement('span');
   label.className = 'pit-lane-label';
   label.textContent = 'P房';
   els.pitLane.appendChild(label);
 
-  const pitLaneCells = [
-    { key: 'entrance', text: '入', type: 'channel' },
-    { key: 'pit', text: 'P', type: 'pit' },
-    { key: 'exit', text: '出', type: 'channel' },
-  ];
-
-  pitLaneCells.forEach((p, idx) => {
+  const pitLaneLabels = { 'pit-entrance': '入', 'pit': 'P', 'pit-exit': '出' };
+  (pitNodes || []).forEach((nodeId) => {
     const cell = document.createElement('div');
-    cell.className = `pit-cell ${p.type}`;
-    cell.textContent = p.text;
+    cell.className = nodeId === 'pit' ? 'pit-cell pit' : 'pit-cell channel';
+    cell.textContent = pitLaneLabels[nodeId] || nodeId;
 
-    const carAt = inPit && (
-      (p.key === 'entrance' && pitPosition === 0) ||
-      (p.key === 'pit' && pitPosition === 1) ||
-      (p.key === 'exit' && pitPosition === 2)
-    );
-    if (carAt) {
+    if (position === nodeId) {
       const car = document.createElement('span');
       car.className = 'car';
       car.textContent = '🏎️';
       cell.appendChild(car);
     }
-
     els.pitLane.appendChild(cell);
   });
 
+  // 主赛道
   els.track.innerHTML = '';
-  for (let i = 0; i < trackLength; i += 1) {
+  (trackNodes || []).forEach((nodeId) => {
     const cell = document.createElement('div');
     cell.className = 'cell';
-    if (corners.includes(i)) cell.classList.add('corner');
-    if (limitMap.has(i)) cell.classList.add('limit');
-    if (pitSet.has(i)) cell.classList.add('pit');
+    if (cornerSet.has(nodeId)) cell.classList.add('corner');
+    if (limitMap.has(nodeId)) cell.classList.add('limit');
+    if (pitEntrySet.has(nodeId)) cell.classList.add('pit');
 
     const index = document.createElement('span');
     index.className = 'index';
-    index.textContent = i;
+    index.textContent = nodeId;
     cell.appendChild(index);
 
-    if (!inPit && i === position) {
+    if (!isOnPit && position === nodeId) {
       const car = document.createElement('span');
       car.className = 'car';
       car.textContent = '🏎️';
       cell.appendChild(car);
-    } else if (limitMap.has(i)) {
+    } else if (limitMap.has(nodeId)) {
       const limitText = document.createElement('span');
       limitText.className = 'limit-text';
-      limitText.textContent = limitMap.get(i);
+      limitText.textContent = limitMap.get(nodeId);
       cell.appendChild(limitText);
     }
 
     els.track.appendChild(cell);
-  }
+  });
 }
 
 function renderHud(state, view) {
   els.lap.textContent = `${state.lap} / ${view.race.lapsToWin}`;
-  els.position.textContent = `${state.position} / ${view.race.trackLength - 1}`;
+  els.position.textContent = view.race.isOnPit
+    ? state.position
+    : `${state.position} / ${view.race.trackLength - 1}`;
   els.speed.textContent = state.speed;
   els.fuel.textContent = state.fuel;
   els.roll.textContent = state.pendingRoll > 0 ? state.pendingRoll : '-';
