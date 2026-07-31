@@ -1,5 +1,6 @@
 const els = {
   status: document.getElementById('status'),
+  activePlayer: document.getElementById('active-player'),
   lap: document.getElementById('lap'),
   position: document.getElementById('position'),
   speed: document.getElementById('speed'),
@@ -13,7 +14,10 @@ const els = {
   actions: document.getElementById('actions'),
   message: document.getElementById('message'),
   reset: document.getElementById('reset'),
+  playersInfo: document.getElementById('players-info'),
 };
+
+const CAR_ICONS = ['🏎️', '🚙'];
 
 async function fetchState() {
   const response = await fetch('/state');
@@ -38,77 +42,108 @@ async function resetGame() {
 }
 
 function renderTrack(state, view) {
-  const { trackNodes, pitNodes, corners, speedLimits, isOnPit } = view.race;
-  const position = state.position;
+  const { trackLength, corners, speedLimits, pitTrackCells, pitNodes, players } = view.race;
   const limitMap = new Map((speedLimits || []).map((l) => [l.at, l.limit]));
-  const cornerSet = new Set(corners || []);
-  const pitEntrySet = new Set(['0', '2']); // P 房入口/出口连接格
 
-  // P 房通道
+  // P房通道
   els.pitLane.innerHTML = '';
   const label = document.createElement('span');
   label.className = 'pit-lane-label';
   label.textContent = 'P房';
   els.pitLane.appendChild(label);
 
-  const pitLaneLabels = { 'pit-entrance': '入', 'pit': 'P', 'pit-exit': '出' };
-  (pitNodes || []).forEach((nodeId) => {
-    const cell = document.createElement('div');
-    cell.className = nodeId === 'pit' ? 'pit-cell pit' : 'pit-cell channel';
-    cell.textContent = pitLaneLabels[nodeId] || nodeId;
+  const pitLaneCells = [
+    { key: 'pit-entrance', text: '入', type: 'channel' },
+    { key: 'pit', text: 'P', type: 'pit' },
+    { key: 'pit-exit', text: '出', type: 'channel' },
+  ];
 
-    if (position === nodeId) {
-      const car = document.createElement('span');
-      car.className = 'car';
-      car.textContent = '🏎️';
-      cell.appendChild(car);
-    }
+  pitLaneCells.forEach((p) => {
+    const cell = document.createElement('div');
+    cell.className = `pit-cell ${p.type}`;
+    cell.textContent = p.text;
+
+    // 显示所有在 P 房通道的赛车
+    players.forEach((pl, idx) => {
+      if (pl.position === p.key) {
+        const car = document.createElement('span');
+        car.className = `car car-${idx}`;
+        car.textContent = CAR_ICONS[idx];
+        cell.appendChild(car);
+      }
+    });
+
     els.pitLane.appendChild(cell);
   });
 
   // 主赛道
   els.track.innerHTML = '';
-  (trackNodes || []).forEach((nodeId) => {
+  for (let i = 0; i < trackLength; i += 1) {
     const cell = document.createElement('div');
     cell.className = 'cell';
-    if (cornerSet.has(nodeId)) cell.classList.add('corner');
-    if (limitMap.has(nodeId)) cell.classList.add('limit');
-    if (pitEntrySet.has(nodeId)) cell.classList.add('pit');
+    const cellId = String(i);
+    if (corners.includes(cellId)) cell.classList.add('corner');
+    if (limitMap.has(cellId)) cell.classList.add('limit');
 
     const index = document.createElement('span');
     index.className = 'index';
-    index.textContent = nodeId;
+    index.textContent = i;
     cell.appendChild(index);
 
-    if (!isOnPit && position === nodeId) {
-      const car = document.createElement('span');
-      car.className = 'car';
-      car.textContent = '🏎️';
-      cell.appendChild(car);
-    } else if (limitMap.has(nodeId)) {
+    // 显示所有在主赛道上的赛车
+    let carAdded = false;
+    players.forEach((pl, idx) => {
+      if (pl.position === cellId) {
+        const car = document.createElement('span');
+        car.className = `car car-${idx}`;
+        car.textContent = CAR_ICONS[idx];
+        cell.appendChild(car);
+        carAdded = true;
+      }
+    });
+
+    if (!carAdded && limitMap.has(cellId)) {
       const limitText = document.createElement('span');
       limitText.className = 'limit-text';
-      limitText.textContent = limitMap.get(nodeId);
+      limitText.textContent = limitMap.get(cellId);
       cell.appendChild(limitText);
     }
 
     els.track.appendChild(cell);
-  });
+  }
 }
 
 function renderHud(state, view) {
-  els.lap.textContent = `${state.lap} / ${view.race.lapsToWin}`;
-  els.position.textContent = view.race.isOnPit
-    ? state.position
-    : `${state.position} / ${view.race.trackLength - 1}`;
-  els.speed.textContent = state.speed;
-  els.fuel.textContent = state.fuel;
-  els.roll.textContent = state.pendingRoll > 0 ? state.pendingRoll : '-';
+  const r = view.race;
+  els.activePlayer.textContent = r.players[state.activePlayerIndex]?.name || '-';
+  els.activePlayer.className = `active-player player-${state.activePlayerIndex}`;
+  els.lap.textContent = `${r.lap} / ${r.lapsToWin}`;
+  els.position.textContent = r.position;
+  els.speed.textContent = r.speed;
+  els.fuel.textContent = r.fuel;
+  els.roll.textContent = r.pendingRoll > 0 ? r.pendingRoll : '-';
   els.perfectBrake.textContent =
-    state.perfectBrake !== null && state.perfectBrake !== undefined ? '生效' : '-';
-  els.stunTurns.textContent = state.stunTurns > 0 ? state.stunTurns : '-';
+    r.perfectBrake !== null && r.perfectBrake !== undefined ? '生效' : '-';
+  els.stunTurns.textContent = r.stunTurns > 0 ? r.stunTurns : '-';
   els.turn.textContent = state.turn;
   els.message.textContent = state.message || '-';
+
+  // 玩家信息面板
+  els.playersInfo.innerHTML = '';
+  r.players.forEach((p, idx) => {
+    const item = document.createElement('div');
+    item.className = `player-info ${p.isActive ? 'active' : ''} player-${idx}`;
+    item.innerHTML = `
+      <span class="player-icon">${CAR_ICONS[idx]}</span>
+      <span class="player-name">${p.name}</span>
+      <span class="player-stat">圈${p.lap}/${r.lapsToWin}</span>
+      <span class="player-stat">位${p.position}</span>
+      <span class="player-stat">速${p.speed}</span>
+      <span class="player-stat">油${p.fuel}</span>
+      ${p.stunTurns > 0 ? '<span class="player-stun">休整</span>' : ''}
+    `;
+    els.playersInfo.appendChild(item);
+  });
 
   const statusMap = {
     playing: { text: '进行中', className: 'status-playing' },
@@ -128,6 +163,14 @@ function renderActions(view) {
     const button = document.createElement('button');
     button.textContent = action.text || action.id;
     button.disabled = !isPlaying;
+
+    // 为"前进"和"回合结束"按钮添加特定样式
+    if (action.id === 'advance') {
+      button.className = 'btn-advance';
+    } else if (action.id === 'end-turn') {
+      button.className = 'btn-end-turn';
+    }
+
     button.addEventListener('click', async () => {
       button.disabled = true;
       try {

@@ -67,7 +67,7 @@
     }
     .track {
       display: grid;
-      grid-template-columns: repeat(8, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 6px;
       max-width: 640px;
       margin-top: 8px;
@@ -170,6 +170,18 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+    .btn-advance {
+      background: #10b981;
+    }
+    .btn-advance:hover:not(:disabled) {
+      background: #059669;
+    }
+    .btn-end-turn {
+      background: #ef4444;
+    }
+    .btn-end-turn:hover:not(:disabled) {
+      background: #dc2626;
+    }
     .reset {
       background: var(--danger);
     }
@@ -179,6 +191,52 @@
     .status-won { color: #34d399; }
     .status-failed { color: var(--danger); }
     .status-playing { color: #60a5fa; }
+    .active-player {
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .active-player.player-0 { color: #60a5fa; }
+    .active-player.player-1 { color: #f472b6; }
+    .players-info {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 6px;
+      background: #374151;
+      font-size: 0.85rem;
+    }
+    .player-info.active {
+      border: 2px solid var(--accent);
+    }
+    .player-info.player-0.active {
+      border-color: #60a5fa;
+    }
+    .player-info.player-1.active {
+      border-color: #f472b6;
+    }
+    .player-icon {
+      font-size: 1.2rem;
+    }
+    .player-name {
+      font-weight: 700;
+    }
+    .player-stat {
+      color: var(--muted);
+    }
+    .player-stun {
+      color: var(--danger);
+      font-weight: 700;
+    }
+    .car-0 { color: #60a5fa; }
+    .car-1 { color: #f472b6; }
   </style>
 </head>
 <body>
@@ -186,8 +244,9 @@
 
   <div class="panels">
     <div class="panel">
-      <h2>比赛状态</h2>
+      <h2>当前操作</h2>
       <div class="stat"><span>状态</span><span id="status">loading</span></div>
+      <div class="stat"><span>当前玩家</span><span id="active-player" class="active-player">-</span></div>
       <div class="stat"><span>圈数</span><span id="lap">-</span></div>
       <div class="stat"><span>位置</span><span id="position">-</span></div>
       <div class="stat"><span>车速</span><span id="speed">-</span></div>
@@ -195,7 +254,12 @@
       <div class="stat"><span>本回合骰子</span><span id="roll">-</span></div>
       <div class="stat"><span>完美刹车</span><span id="perfect-brake">-</span></div>
       <div class="stat"><span>休整回合</span><span id="stun-turns">-</span></div>
-      <div class="stat"><span>回合</span><span id="turn">-</span></div>
+      <div class="stat"><span>总回合</span><span id="turn">-</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>玩家状态</h2>
+      <div id="players-info" class="players-info">加载中…</div>
     </div>
 
     <div class="panel">
