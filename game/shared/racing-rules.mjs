@@ -109,7 +109,7 @@ function cornerIndexForLimit(level, limitAt) {
 // 沿图的有向边前进，每步取 neighbors[0]（主方向）
 function moveOnGraph(level, player, fromNode, distance) {
   if (distance <= 0) {
-    return { position: fromNode, lap: player.lap, fuelCost: 0, offTrack: false, stepsTaken: 0 };
+    return { position: fromNode, lap: player.lap, fuelCost: 0, offTrack: false, stepsTaken: 0, perfectBrakeCleared: false };
   }
 
   const layout = level.layout;
@@ -117,6 +117,7 @@ function moveOnGraph(level, player, fromNode, distance) {
   let offTrack = false;
   let lapsGained = 0;
   let stepsTaken = 0;
+  let perfectBrakeCleared = false;
 
   for (let step = 0; step < distance; step += 1) {
     const neighbors = layout.neighbors(current);
@@ -134,7 +135,10 @@ function moveOnGraph(level, player, fromNode, distance) {
     const limit = level.speedLimits.find((l) => l.at === current);
     if (limit) {
       const cornerIdx = cornerIndexForLimit(level, limit.at);
-      if (player.perfectBrake === cornerIdx) continue;
+      if (player.perfectBrake === cornerIdx) {
+        perfectBrakeCleared = true;
+        continue;
+      }
 
       if (player.speed > limit.limit) {
         offTrack = true;
@@ -156,6 +160,7 @@ function moveOnGraph(level, player, fromNode, distance) {
     fuelCost: lapsGained > 0 ? lapsGained : 0,
     offTrack,
     stepsTaken,
+    perfectBrakeCleared,
   };
 }
 
@@ -209,7 +214,13 @@ function resolvePitExitMovement(player, level, pendingRoll) {
   };
 
   const landedCorner = level.corners.indexOf(nextPlayer.position);
-  nextPlayer = { ...nextPlayer, perfectBrake: landedCorner >= 0 ? landedCorner : null };
+  // 如果经过了匹配的红色限速格，清除完美刹车
+  if (result.perfectBrakeCleared) {
+    nextPlayer = { ...nextPlayer, perfectBrake: null };
+  } else if (landedCorner >= 0) {
+    nextPlayer = { ...nextPlayer, perfectBrake: landedCorner };
+  }
+  // 其他情况：保留原有的 perfectBrake
 
   return nextPlayer;
 }
@@ -283,8 +294,17 @@ function resolveMovement(player, level, pendingRoll) {
     message,
   };
 
+  // 如果经过了匹配的红色限速格，清除完美刹车
+  if (result.perfectBrakeCleared) {
+    nextPlayer = { ...nextPlayer, perfectBrake: null };
+  }
+
+  // 如果停在了黄色弯道格上，获得该弯道的完美刹车（覆盖原有值）
   const landedCorner = level.corners.indexOf(nextPlayer.position);
-  nextPlayer = { ...nextPlayer, perfectBrake: landedCorner >= 0 ? landedCorner : null };
+  if (landedCorner >= 0) {
+    nextPlayer = { ...nextPlayer, perfectBrake: landedCorner };
+  }
+  // 其他情况（未经过红色格、未停在弯道）：保留原有的 perfectBrake
 
   return nextPlayer;
 }
@@ -583,9 +603,10 @@ export function applyAction(state, action = { id: 'end-turn' }) {
 
   // ========== 技能牌操作 ==========
 
-  // 补牌：弃掉当前手牌，抽取新牌
+  // 补牌：手牌为空时抽取新牌
   if (actionId === 'refill-cards') {
     if (!player.canRefillCards) return state;
+    if (player.hand.length > 0) return state;
     const updatedPlayer = {
       ...player,
       hand: drawCards(level.cardsPerRefill),
@@ -599,6 +620,34 @@ export function applyAction(state, action = { id: 'end-turn' }) {
       ...state,
       players: newPlayers,
       message: `${updatedPlayer.name}：补牌完成`,
+    };
+  }
+
+  // 弃牌：弃掉一张手牌，随机抽取一张新牌
+  if (actionId === 'discard-card') {
+    if (!player.canRefillCards) return state;
+    const cardId = action?.cardId;
+    if (!cardId) return state;
+    const cardIndex = player.hand.findIndex((c) => c.instanceId === cardId);
+    if (cardIndex < 0) return state;
+    const card = player.hand[cardIndex];
+    const newHand = [...player.hand];
+    newHand.splice(cardIndex, 1);
+    const newCard = drawCards(1)[0];
+    newHand.push(newCard);
+    const updatedPlayer = {
+      ...player,
+      hand: newHand,
+      // canRefillCards 保持 true，可继续弃牌
+      lastAction: 'discard-card',
+      message: `弃掉「${card.name}」，抽到「${newCard.name}」`,
+    };
+    const newPlayers = [...state.players];
+    newPlayers[playerIndex] = updatedPlayer;
+    return {
+      ...state,
+      players: newPlayers,
+      message: `${updatedPlayer.name}：弃掉「${card.name}」，抽到「${newCard.name}」`,
     };
   }
 
@@ -739,8 +788,16 @@ export function applyAction(state, action = { id: 'end-turn' }) {
         lastAction: 'end-turn',
         message,
       };
+      // 如果经过了匹配的红色限速格，清除完美刹车
+      if (result.perfectBrakeCleared) {
+        updatedPlayer = { ...updatedPlayer, perfectBrake: null };
+      }
+      // 如果停在了黄色弯道格上，获得该弯道的完美刹车
       const landedCorner = level.corners.indexOf(updatedPlayer.position);
-      updatedPlayer = { ...updatedPlayer, perfectBrake: landedCorner >= 0 ? landedCorner : null };
+      if (landedCorner >= 0) {
+        updatedPlayer = { ...updatedPlayer, perfectBrake: landedCorner };
+      }
+      // 其他情况：保留原有的 perfectBrake
     }
 
     // 油量/获胜检查

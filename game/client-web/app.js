@@ -199,10 +199,11 @@ function renderHand(state, view) {
   const r = view.race;
   els.hand.innerHTML = '';
 
-  if (r.canRefillCards) {
+  // 补牌按钮：手牌为空时可补牌
+  if (r.canRefillCards && (!r.hand || r.hand.length === 0)) {
     const refillBtn = document.createElement('button');
     refillBtn.className = 'btn-refill';
-    refillBtn.textContent = '补牌（弃旧换新）';
+    refillBtn.textContent = '补牌';
     refillBtn.disabled = view.status !== 'playing';
     refillBtn.addEventListener('click', async () => {
       refillBtn.disabled = true;
@@ -230,12 +231,13 @@ function renderHand(state, view) {
         <div class="card-desc">${card.description}</div>
       `;
 
-      const btn = document.createElement('button');
-      btn.className = 'btn-play-card';
-      btn.textContent = '出牌';
-      btn.disabled = view.status !== 'playing';
-      btn.addEventListener('click', async () => {
-        btn.disabled = true;
+      // 出牌按钮
+      const playBtn = document.createElement('button');
+      playBtn.className = 'btn-play-card';
+      playBtn.textContent = '出牌';
+      playBtn.disabled = view.status !== 'playing' || r.canRefillCards;
+      playBtn.addEventListener('click', async () => {
+        playBtn.disabled = true;
         try {
           const response = await fetch('/advance', {
             method: 'POST',
@@ -248,8 +250,31 @@ function renderHand(state, view) {
           els.message.textContent = `出牌失败：${error.message}`;
         }
       });
+      cardEl.appendChild(playBtn);
 
-      cardEl.appendChild(btn);
+      // 弃牌按钮：可补牌时显示红色弃牌按钮
+      if (r.canRefillCards) {
+        const discardBtn = document.createElement('button');
+        discardBtn.className = 'btn-discard-card';
+        discardBtn.textContent = '弃牌';
+        discardBtn.disabled = view.status !== 'playing';
+        discardBtn.addEventListener('click', async () => {
+          discardBtn.disabled = true;
+          try {
+            const response = await fetch('/advance', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ id: 'discard-card', cardId: card.instanceId }),
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            await refresh();
+          } catch (error) {
+            els.message.textContent = `弃牌失败：${error.message}`;
+          }
+        });
+        cardEl.appendChild(discardBtn);
+      }
+
       els.hand.appendChild(cardEl);
     });
   } else if (!r.canRefillCards) {
