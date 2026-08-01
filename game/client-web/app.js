@@ -16,6 +16,7 @@ const els = {
   message: document.getElementById('message'),
   reset: document.getElementById('reset'),
   playersInfo: document.getElementById('players-info'),
+  hand: document.getElementById('hand'),
 };
 
 const CAR_ICONS = ['🏎️', '🚙'];
@@ -178,7 +179,13 @@ function renderActions(view) {
     button.addEventListener('click', async () => {
       button.disabled = true;
       try {
-        await submitAction(action.id);
+        const payload = action.cardId ? { id: action.id, cardId: action.cardId } : { id: action.id };
+        const response = await fetch('/advance', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         await refresh();
       } catch (error) {
         els.message.textContent = `提交失败：${error.message}`;
@@ -188,12 +195,75 @@ function renderActions(view) {
   }
 }
 
+function renderHand(state, view) {
+  const r = view.race;
+  els.hand.innerHTML = '';
+
+  if (r.canRefillCards) {
+    const refillBtn = document.createElement('button');
+    refillBtn.className = 'btn-refill';
+    refillBtn.textContent = '补牌（弃旧换新）';
+    refillBtn.disabled = view.status !== 'playing';
+    refillBtn.addEventListener('click', async () => {
+      refillBtn.disabled = true;
+      try {
+        const response = await fetch('/advance', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ id: 'refill-cards' }),
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        await refresh();
+      } catch (error) {
+        els.message.textContent = `补牌失败：${error.message}`;
+      }
+    });
+    els.hand.appendChild(refillBtn);
+  }
+
+  if (r.hand && r.hand.length > 0) {
+    r.hand.forEach((card) => {
+      const cardEl = document.createElement('div');
+      cardEl.className = 'hand-card';
+      cardEl.innerHTML = `
+        <div class="card-name">${card.name}</div>
+        <div class="card-desc">${card.description}</div>
+      `;
+
+      const btn = document.createElement('button');
+      btn.className = 'btn-play-card';
+      btn.textContent = '出牌';
+      btn.disabled = view.status !== 'playing';
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        try {
+          const response = await fetch('/advance', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ id: 'play-card', cardId: card.instanceId }),
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          await refresh();
+        } catch (error) {
+          els.message.textContent = `出牌失败：${error.message}`;
+        }
+      });
+
+      cardEl.appendChild(btn);
+      els.hand.appendChild(cardEl);
+    });
+  } else if (!r.canRefillCards) {
+    els.hand.textContent = '无手牌';
+  }
+}
+
 async function refresh() {
   try {
     const { state, view } = await fetchState();
     renderHud(state, view);
     renderTrack(state, view);
     renderActions(view);
+    renderHand(state, view);
   } catch (error) {
     els.message.textContent = `拉取状态失败：${error.message}`;
   }

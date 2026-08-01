@@ -8,8 +8,41 @@ export const DEFAULT_LEVEL = Object.freeze({
   lapsToWin: 3,
   maxFuel: 15,
   maxSpeed: 6,
+  maxHandSize: 2,
+  cardsPerRefill: 2,
   corners: ['4', '10', '16'],
 });
+
+// 技能牌池（占位用，效果后续迭代）
+const SKILL_CARDS = [
+  { id: 'speed_boost', name: '加速冲刺', description: '本回合速度+2' },
+  { id: 'tire_protect', name: '轮胎保护', description: '减少轮胎磨损' },
+  { id: 'fuel_save', name: '节能驾驶', description: '本回合油耗减半' },
+  { id: 'shortcut', name: '抄近道', description: '跳过前方弯道' },
+  { id: 'drafting', name: '尾流加速', description: '跟车时不减速' },
+  { id: 'pit_boost', name: '快速维修', description: '进P房时多补油' },
+];
+
+let cardInstanceCounter = 0;
+
+function createCardInstance(cardType) {
+  cardInstanceCounter += 1;
+  return {
+    instanceId: `card_${cardInstanceCounter}`,
+    id: cardType.id,
+    name: cardType.name,
+    description: cardType.description,
+  };
+}
+
+function drawCards(count) {
+  const cards = [];
+  for (let i = 0; i < count; i += 1) {
+    const cardType = SKILL_CARDS[Math.floor(Math.random() * SKILL_CARDS.length)];
+    cards.push(createCardInstance(cardType));
+  }
+  return cards;
+}
 
 // 判断是否在主赛道（非 P 房节点）
 function isOnMainTrack(position) {
@@ -256,6 +289,10 @@ function resolveMovement(player, level, pendingRoll) {
   return nextPlayer;
 }
 
+function addCardActions(actions, player, level) {
+  // 技能牌操作已迁移到手牌面板
+}
+
 function nextActionList(player, level, status) {
   if (status !== 'playing') return [];
   const actions = [];
@@ -293,6 +330,7 @@ function nextActionList(player, level, status) {
     if (player.hasAdvanced) {
       actions.push({ id: 'end-turn', params: 'none', text: '回合结束' });
     }
+    addCardActions(actions, player, level);
     return actions;
   }
 
@@ -308,6 +346,7 @@ function nextActionList(player, level, status) {
     if (player.hasAdvanced) {
       actions.push({ id: 'end-turn', params: 'none', text: '回合结束' });
     }
+    addCardActions(actions, player, level);
     return actions;
   }
 
@@ -328,6 +367,7 @@ function nextActionList(player, level, status) {
   if (player.hasAdvanced) {
     actions.push({ id: 'end-turn', params: 'none', text: '回合结束' });
   }
+  addCardActions(actions, player, level);
   return actions;
 }
 
@@ -350,19 +390,22 @@ function createPlayer(name, level) {
     spunOut: false,
     pitEntryCommitted: false,
     tireWear: 0,
+    hand: [],
+    canRefillCards: false,
   };
 }
 
 export function createInitialState(level = DEFAULT_LEVEL, seed = 1) {
   const resolvedLevel = normalizeLevel(level);
+  const players = [
+    createPlayer('玩家1', resolvedLevel),
+    createPlayer('玩家2', resolvedLevel),
+  ].map((p) => ({ ...p, hand: drawCards(resolvedLevel.cardsPerRefill) }));
   return {
     seed,
     level: resolvedLevel,
     activePlayerIndex: 0,
-    players: [
-      createPlayer('玩家1', resolvedLevel),
-      createPlayer('玩家2', resolvedLevel),
-    ],
+    players,
     turn: 0,
     status: 'playing',
     message: '比赛准备就绪',
@@ -538,6 +581,51 @@ export function applyAction(state, action = { id: 'end-turn' }) {
     };
   }
 
+  // ========== 技能牌操作 ==========
+
+  // 补牌：弃掉当前手牌，抽取新牌
+  if (actionId === 'refill-cards') {
+    if (!player.canRefillCards) return state;
+    const updatedPlayer = {
+      ...player,
+      hand: drawCards(level.cardsPerRefill),
+      canRefillCards: false,
+      lastAction: 'refill-cards',
+      message: '补牌完成',
+    };
+    const newPlayers = [...state.players];
+    newPlayers[playerIndex] = updatedPlayer;
+    return {
+      ...state,
+      players: newPlayers,
+      message: `${updatedPlayer.name}：补牌完成`,
+    };
+  }
+
+  // 打出技能牌
+  if (actionId === 'play-card') {
+    const cardId = action?.cardId;
+    if (!cardId) return state;
+    const cardIndex = player.hand.findIndex((c) => c.instanceId === cardId);
+    if (cardIndex < 0) return state;
+    const card = player.hand[cardIndex];
+    const newHand = [...player.hand];
+    newHand.splice(cardIndex, 1);
+    const updatedPlayer = {
+      ...player,
+      hand: newHand,
+      lastAction: 'play-card',
+      message: `打出技能牌：${card.name}`,
+    };
+    const newPlayers = [...state.players];
+    newPlayers[playerIndex] = updatedPlayer;
+    return {
+      ...state,
+      players: newPlayers,
+      message: `${updatedPlayer.name}：打出技能牌「${card.name}」`,
+    };
+  }
+
   // ========== 前进（移动赛车，不切换玩家） ==========
 
   if (actionId === 'advance') {
@@ -562,6 +650,7 @@ export function applyAction(state, action = { id: 'end-turn' }) {
         remainingSteps: player.speed - (movedPlayer.stepsTaken || 0),
         lastAction: 'stopped-at-zero',
         turn: player.turn,
+        canRefillCards: true,
       };
       return { ...state, players: newPlayers, message: `${movedPlayer.name}：到达0号格子，是否进入P房？` };
     }
@@ -577,6 +666,11 @@ export function applyAction(state, action = { id: 'end-turn' }) {
         return { ...state, players: newPlayers, status: 'failed', message: `${player.name}：轮胎磨损${tireWear}，达到极限，退出比赛` };
       }
       movedPlayer = { ...movedPlayer, spunOut: true, tireWear };
+    }
+
+    // 跑完一圈标记可补牌
+    if (movedPlayer.lap > player.lap) {
+      movedPlayer = { ...movedPlayer, canRefillCards: true };
     }
 
     movedPlayer = { ...movedPlayer, hasAdvanced: true };
@@ -818,6 +912,8 @@ export function stateToView(state) {
       perfectBrake: activePlayer?.perfectBrake,
       stunTurns: activePlayer?.stunTurns,
       tireWear: activePlayer?.tireWear ?? 0,
+      hand: activePlayer?.hand ?? [],
+      canRefillCards: activePlayer?.canRefillCards ?? false,
       isOnPit: activePlayer ? !isOnMainTrack(activePlayer.position) : false,
       lastAction: activePlayer?.lastAction,
       message: state.message,
@@ -834,6 +930,7 @@ export function stateToView(state) {
         fuel: p.fuel,
         stunTurns: p.stunTurns,
         tireWear: p.tireWear ?? 0,
+        hand: p.hand ?? [],
         isOnPit: !isOnMainTrack(p.position),
         isActive: i === state.activePlayerIndex,
       })),

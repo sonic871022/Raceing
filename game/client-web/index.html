@@ -239,6 +239,73 @@
       color: var(--danger);
       font-weight: 700;
     }
+    .hand {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-height: 60px;
+    }
+    .hand-card {
+      background: #374151;
+      border: 1px solid #4b5563;
+      border-radius: 8px;
+      padding: 8px 12px;
+      min-width: 100px;
+      text-align: center;
+    }
+    .hand-card .card-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .hand-card .card-desc {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .btn-play-card {
+      margin-top: 8px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .btn-play-card:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+    .btn-play-card:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-refill {
+      margin-bottom: 8px;
+      padding: 8px 12px;
+      background: #fbbf24;
+      color: #111827;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .btn-refill:hover:not(:disabled) {
+      background: #f59e0b;
+    }
+    .btn-refill:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .refill-hint {
+      color: #fbbf24;
+      font-size: 0.8rem;
+      padding: 8px;
+      background: #374151;
+      border-radius: 6px;
+    }
     .car-0 { color: #60a5fa; }
     .car-1 { color: #f472b6; }
   </style>
@@ -279,6 +346,11 @@
         <button disabled>加载中…</button>
       </div>
       <div id="message" class="message">-</div>
+    </div>
+
+    <div class="panel">
+      <h2>手牌</h2>
+      <div id="hand" class="hand">-</div>
     </div>
   </div>
 
