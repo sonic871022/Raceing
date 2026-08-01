@@ -8,6 +8,7 @@ const els = {
   roll: document.getElementById('roll'),
   perfectBrake: document.getElementById('perfect-brake'),
   stunTurns: document.getElementById('stun-turns'),
+  tireWear: document.getElementById('tire-wear'),
   turn: document.getElementById('turn'),
   pitLane: document.getElementById('pit-lane'),
   track: document.getElementById('track'),
@@ -126,6 +127,7 @@ function renderHud(state, view) {
   els.perfectBrake.textContent =
     r.perfectBrake !== null && r.perfectBrake !== undefined ? '生效' : '-';
   els.stunTurns.textContent = r.stunTurns > 0 ? r.stunTurns : '-';
+  els.tireWear.textContent = r.tireWear > 0 ? `${r.tireWear} / 3` : '0 / 3';
   els.turn.textContent = state.turn;
   els.message.textContent = state.message || '-';
 
@@ -141,6 +143,7 @@ function renderHud(state, view) {
       <span class="player-stat">位${p.position}</span>
       <span class="player-stat">速${p.speed}</span>
       <span class="player-stat">油${p.fuel}</span>
+      <span class="player-stat">胎${p.tireWear}/3</span>
       ${p.stunTurns > 0 ? '<span class="player-stun">休整</span>' : ''}
     `;
     els.playersInfo.appendChild(item);

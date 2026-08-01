@@ -5,7 +5,7 @@ const PIT_NODES = ['pit-entrance', 'pit', 'pit-exit'];
 
 export const DEFAULT_LEVEL = Object.freeze({
   trackLength: 24,
-  lapsToWin: 2,
+  lapsToWin: 3,
   maxFuel: 15,
   maxSpeed: 6,
   corners: ['4', '10', '16'],
@@ -349,6 +349,7 @@ function createPlayer(name, level) {
     hasAdvanced: false,
     spunOut: false,
     pitEntryCommitted: false,
+    tireWear: 0,
   };
 }
 
@@ -377,6 +378,23 @@ function isTurnEndingAction(player, actionId) {
   if (actionId === 'end-turn') return true;
   if (actionId === 'enter-pit') return true;
   return false;
+}
+
+// 检查是否只剩一名玩家存活，若是则该玩家获胜
+function checkLastPlayerStanding(state, players) {
+  const activePlayers = players.filter((p) => p.status !== 'failed');
+  if (activePlayers.length === 1) {
+    const winnerIndex = players.indexOf(activePlayers[0]);
+    const newPlayers = [...players];
+    newPlayers[winnerIndex] = { ...activePlayers[0], status: 'won', message: '其他玩家已退出，获得胜利！' };
+    return {
+      ...state,
+      players: newPlayers,
+      status: 'won',
+      message: `${activePlayers[0].name}：其他玩家已退出，获得胜利！`,
+    };
+  }
+  return null;
 }
 
 export function applyAction(state, action = { id: 'end-turn' }) {
@@ -550,7 +568,15 @@ export function applyAction(state, action = { id: 'end-turn' }) {
 
     // 冲出赛道标记：暂不设 stunTurns，等回合结束时再设，让下一回合成为休整回合
     if (movedPlayer.offTrack) {
-      movedPlayer = { ...movedPlayer, spunOut: true };
+      const tireWear = player.tireWear + 1;
+      if (tireWear >= 3) {
+        const newPlayers = [...state.players];
+        newPlayers[playerIndex] = { ...player, tireWear, status: 'failed', message: `轮胎磨损${tireWear}，达到极限，退出比赛` };
+        const lastManStanding = checkLastPlayerStanding(state, newPlayers);
+        if (lastManStanding) return lastManStanding;
+        return { ...state, players: newPlayers, status: 'failed', message: `${player.name}：轮胎磨损${tireWear}，达到极限，退出比赛` };
+      }
+      movedPlayer = { ...movedPlayer, spunOut: true, tireWear };
     }
 
     movedPlayer = { ...movedPlayer, hasAdvanced: true };
@@ -559,6 +585,8 @@ export function applyAction(state, action = { id: 'end-turn' }) {
     if (movedPlayer.fuel < 0) {
       const newPlayers = [...state.players];
       newPlayers[playerIndex] = { ...movedPlayer, status: 'failed', message: '油量耗尽，退出比赛' };
+      const lastManStanding = checkLastPlayerStanding(state, newPlayers);
+      if (lastManStanding) return lastManStanding;
       return { ...state, players: newPlayers, status: 'failed', message: `${movedPlayer.name}：油量耗尽，退出比赛` };
     }
 
@@ -592,6 +620,14 @@ export function applyAction(state, action = { id: 'end-turn' }) {
       const result = moveOnGraph(level, player, player.position, remainingSteps);
       let message = `继续前进 ${remainingSteps} 格`;
       if (result.offTrack) message = '继续前进时冲出赛道！下回合原地停留';
+      const tireWear = result.offTrack ? player.tireWear + 1 : player.tireWear;
+      if (tireWear >= 3) {
+        const newPlayers = [...state.players];
+        newPlayers[playerIndex] = { ...player, tireWear, status: 'failed', message: `轮胎磨损${tireWear}，达到极限，退出比赛` };
+        const lastManStanding = checkLastPlayerStanding(state, newPlayers);
+        if (lastManStanding) return lastManStanding;
+        return { ...state, players: newPlayers, status: 'failed', message: `${player.name}：轮胎磨损${tireWear}，达到极限，退出比赛` };
+      }
       updatedPlayer = {
         ...player,
         lap: result.lap,
@@ -602,6 +638,7 @@ export function applyAction(state, action = { id: 'end-turn' }) {
         speed: result.offTrack ? 0 : player.speed,
         stunTurns: 0,
         spunOut: result.offTrack || player.spunOut,
+        tireWear,
         atPitCrossing: false,
         remainingSteps: 0,
         hasAdvanced: true,
@@ -616,6 +653,8 @@ export function applyAction(state, action = { id: 'end-turn' }) {
     if (updatedPlayer.fuel < 0) {
       const newPlayers = [...state.players];
       newPlayers[playerIndex] = { ...updatedPlayer, status: 'failed', message: '油量耗尽，退出比赛' };
+      const lastManStanding = checkLastPlayerStanding(state, newPlayers);
+      if (lastManStanding) return lastManStanding;
       return { ...state, players: newPlayers, status: 'failed', message: `${updatedPlayer.name}：油量耗尽，退出比赛` };
     }
     if (updatedPlayer.lap >= level.lapsToWin) {
@@ -778,6 +817,7 @@ export function stateToView(state) {
       roll: activePlayer?.roll,
       perfectBrake: activePlayer?.perfectBrake,
       stunTurns: activePlayer?.stunTurns,
+      tireWear: activePlayer?.tireWear ?? 0,
       isOnPit: activePlayer ? !isOnMainTrack(activePlayer.position) : false,
       lastAction: activePlayer?.lastAction,
       message: state.message,
@@ -793,6 +833,7 @@ export function stateToView(state) {
         speed: p.speed,
         fuel: p.fuel,
         stunTurns: p.stunTurns,
+        tireWear: p.tireWear ?? 0,
         isOnPit: !isOnMainTrack(p.position),
         isActive: i === state.activePlayerIndex,
       })),
