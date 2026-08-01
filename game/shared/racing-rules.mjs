@@ -143,13 +143,13 @@ function resolvePitMovement(player, level, isEntering = false) {
 
 // 从 P 房格或出口出发，沿图正常移动
 function resolvePitExitMovement(player, level, pendingRoll) {
-  if (pendingRoll === 0) {
+  if (player.speed <= 0) {
     return {
       ...player,
       pendingRoll: 0,
       roll: 0,
       lastAction: 'end-turn',
-      message: '请先掷骰子再出发',
+      message: '当前速度为0，无法前进',
     };
   }
 
@@ -177,6 +177,49 @@ function resolvePitExitMovement(player, level, pendingRoll) {
 
   const landedCorner = level.corners.indexOf(nextPlayer.position);
   nextPlayer = { ...nextPlayer, perfectBrake: landedCorner >= 0 ? landedCorner : null };
+
+  return nextPlayer;
+}
+
+// 从0号格沿P房通道前进：0 → pit-entrance → pit → pit-exit → 2
+function resolvePitEntryMovement(player, level, pendingRoll) {
+  const distance = player.speed;
+  const layout = level.layout;
+  let current = player.position; // '0'
+  let stepsTaken = 0;
+  let reachedPit = false;
+
+  for (let step = 0; step < distance; step += 1) {
+    const neighbors = layout.neighbors(current);
+    if (neighbors.length === 0) break;
+
+    // 从0号格走P房分支（neighbors[1]），其他格子走主方向
+    current = current === '0' && neighbors.length > 1 ? neighbors[1] : neighbors[0];
+    stepsTaken += 1;
+
+    if (current === 'pit') {
+      reachedPit = true;
+      break;
+    }
+  }
+
+  let message = `车速 ${distance}，沿P房通道前进 ${stepsTaken} 格`;
+  if (reachedPit) {
+    message = '进入P房，补油完毕';
+  }
+
+  const nextPlayer = {
+    ...player,
+    position: current,
+    fuel: reachedPit ? level.maxFuel : player.fuel,
+    speed: reachedPit ? 0 : player.speed,
+    pendingRoll: 0,
+    roll: pendingRoll,
+    perfectBrake: null,
+    pitEntryCommitted: false,
+    lastAction: 'end-turn',
+    message,
+  };
 
   return nextPlayer;
 }
@@ -239,12 +282,12 @@ function nextActionList(player, level, status) {
       actions.push({ id: 'end-turn', params: 'none', text: '回合结束' });
       return actions;
     }
-    if (player.pendingRoll === 0) {
+    if (player.pendingRoll === 0 && !player.hasAdvanced) {
       actions.push({ id: 'roll-dice', params: 'none', text: '掷骰子' });
     }
     actions.push({ id: 'accelerate', params: 'none', text: '加速（油耗 1，速度+1）' });
     actions.push({ id: 'brake', params: 'none', text: '刹车（速度-1）' });
-    if (player.pendingRoll > 0 && !player.hasAdvanced) {
+    if (player.speed > 0 && !player.hasAdvanced) {
       actions.push({ id: 'advance', params: 'none', text: '前进' });
     }
     if (player.hasAdvanced) {
@@ -254,12 +297,12 @@ function nextActionList(player, level, status) {
   }
 
   if (player.position === 'pit-exit') {
-    if (player.pendingRoll === 0) {
+    if (player.pendingRoll === 0 && !player.hasAdvanced) {
       actions.push({ id: 'roll-dice', params: 'none', text: '掷骰子' });
     }
     actions.push({ id: 'accelerate', params: 'none', text: '加速（油耗 1，速度+1）' });
     actions.push({ id: 'brake', params: 'none', text: '刹车（速度-1）' });
-    if (player.pendingRoll > 0 && !player.hasAdvanced) {
+    if (player.speed > 0 && !player.hasAdvanced) {
       actions.push({ id: 'advance', params: 'none', text: '前进' });
     }
     if (player.hasAdvanced) {
@@ -268,10 +311,10 @@ function nextActionList(player, level, status) {
     return actions;
   }
 
-  if (player.position === '0' && player.turn > 0) {
+  if (player.position === '0' && player.turn > 0 && !player.pitEntryCommitted) {
     actions.push({ id: 'enter-pit', params: 'none', text: '进入P房' });
   }
-  if (player.pendingRoll === 0) {
+  if (player.pendingRoll === 0 && !player.hasAdvanced) {
     actions.push({ id: 'roll-dice', params: 'none', text: '掷骰子' });
   }
   actions.push({ id: 'accelerate', params: 'none', text: '加速（油耗 1，速度+1）' });
@@ -279,7 +322,7 @@ function nextActionList(player, level, status) {
   if (player.fuel < level.maxFuel) {
     actions.push({ id: 'pit-stop', params: 'none', text: '原地加油' });
   }
-  if (player.pendingRoll > 0 && !player.hasAdvanced) {
+  if (player.speed > 0 && !player.hasAdvanced) {
     actions.push({ id: 'advance', params: 'none', text: '前进' });
   }
   if (player.hasAdvanced) {
@@ -305,6 +348,7 @@ function createPlayer(name, level) {
     remainingSteps: 0,
     hasAdvanced: false,
     spunOut: false,
+    pitEntryCommitted: false,
   };
 }
 
@@ -479,11 +523,13 @@ export function applyAction(state, action = { id: 'end-turn' }) {
   // ========== 前进（移动赛车，不切换玩家） ==========
 
   if (actionId === 'advance') {
-    if (player.pendingRoll === 0) return state;
+    if (player.speed <= 0) return state;
     if (player.hasAdvanced) return state;
 
     let movedPlayer;
-    if (player.position === 'pit' || player.position === 'pit-exit') {
+    if (player.pitEntryCommitted) {
+      movedPlayer = resolvePitEntryMovement(player, level, player.pendingRoll);
+    } else if (player.position === 'pit' || player.position === 'pit-exit') {
       movedPlayer = resolvePitExitMovement(player, level, player.pendingRoll);
     } else {
       movedPlayer = resolveMovement(player, level, player.pendingRoll);
@@ -583,15 +629,73 @@ export function applyAction(state, action = { id: 'end-turn' }) {
     return { ...state, players: newPlayers, message: `${updatedPlayer.name}：${updatedPlayer.message}` };
   }
 
-  // ========== 经过0后进入P房（不切换玩家） ==========
+  // ========== 经过0后进入P房通道（不切换玩家） ==========
 
   if (player.atPitCrossing && actionId === 'enter-pit') {
+    const remainingSteps = player.remainingSteps || 0;
+
+    // 没有剩余步数，标记承诺进入P房，结束当前回合
+    if (remainingSteps <= 0) {
+      const updatedPlayer = {
+        ...player,
+        atPitCrossing: false,
+        pitEntryCommitted: true,
+        hasAdvanced: true,
+        lastAction: 'commit-pit-entry',
+        message: '确定进入P房，下回合从P房通道进入',
+      };
+      const newPlayers = [...state.players];
+      newPlayers[playerIndex] = updatedPlayer;
+      return { ...state, players: newPlayers, message: `${updatedPlayer.name}：${updatedPlayer.message}` };
+    }
+
+    // 有剩余步数，沿P房通道逐格移动
+    const layout = level.layout;
+    let currentPos = player.position; // '0'
+    let reachedPit = false;
+
+    for (let step = 0; step < remainingSteps; step += 1) {
+      const neighbors = layout.neighbors(currentPos);
+      if (neighbors.length === 0) break;
+
+      // 从0号格走P房分支（neighbors[1]），其他格子走主方向
+      currentPos = currentPos === '0' && neighbors.length > 1 ? neighbors[1] : neighbors[0];
+
+      if (currentPos === 'pit') {
+        reachedPit = true;
+        break;
+      }
+    }
+
+    if (reachedPit) {
+      const updatedPlayer = {
+        ...player,
+        position: 'pit',
+        fuel: level.maxFuel,
+        speed: 0,
+        pendingRoll: 0,
+        roll: 0,
+        perfectBrake: null,
+        atPitCrossing: false,
+        remainingSteps: 0,
+        hasAdvanced: true,
+        lastAction: 'enter-pit',
+        message: '进入P房，补油完毕，请点击回合结束',
+      };
+      const newPlayers = [...state.players];
+      newPlayers[playerIndex] = updatedPlayer;
+      return { ...state, players: newPlayers, message: `${updatedPlayer.name}：${updatedPlayer.message}` };
+    }
+
+    // 步数不足未到达P房，停在P房通道中
     const updatedPlayer = {
-      ...resolvePitMovement(player, level, true),
+      ...player,
+      position: currentPos,
       atPitCrossing: false,
       remainingSteps: 0,
       hasAdvanced: true,
-      message: '进入P房，补油完毕，请点击回合结束',
+      lastAction: 'enter-pit-lane',
+      message: `进入P房通道，当前在${currentPos}，剩余步数不足`,
     };
     const newPlayers = [...state.players];
     newPlayers[playerIndex] = updatedPlayer;

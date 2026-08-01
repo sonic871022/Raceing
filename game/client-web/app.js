@@ -84,6 +84,7 @@ function renderTrack(state, view) {
     const cellId = String(i);
     if (corners.includes(cellId)) cell.classList.add('corner');
     if (limitMap.has(cellId)) cell.classList.add('limit');
+    if (cellId === '0' || cellId === '2') cell.classList.add('green');
 
     const index = document.createElement('span');
     index.className = 'index';
